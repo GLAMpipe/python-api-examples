@@ -17,6 +17,6 @@ You can delete all test projects_
     python delete-test-projects.py
 
 ## requirements:
-- You should have [GLAMpipe](http://glampipe.org) installed and running on http://localhost:3000
+- You should have latest development version of [GLAMpipe](http://glampipe.org) installed and running on http://localhost:3000
 - python "requests" module http://docs.python-requests.org/en/master/
 - python "json" module
