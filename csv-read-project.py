@@ -2,7 +2,7 @@
 
 '''
 This is an example application for using GLAMpipe API.
-Application creates a project, adds some documents to it and detects language of 'text' field
+Application creates a project, reads online csv file and get top composers from facet api
 '''
 
 import requests
