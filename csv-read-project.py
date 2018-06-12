@@ -9,6 +9,30 @@ import requests
 import json
 url = "http://localhost:3000/api/v1"
 
+project_title = 'Helsinki City Orchestra'
+file_url = 'http://www.hel.fi/hel2/tietokeskus/data/helsinki/kulttuuri/Helsingin_kaupunginorkesterin_konsertit.csv'
+
+params_csv = {'file_url': file_url}
+settings_csv = {'separator': ';', 'encoding': 'latin1', 'columns': 'true'}
+
+settings_facet = {
+	'label_1': 'Composer', 
+	'in_field_1': 'säveltäjä', 
+	'display_1': 'left', 
+	'collapsed_1': 'false',
+	'label_2': 'Year', 
+	'in_field_2': 'year', 
+	'display_2': 'right', 
+	'collapsed_2': 'false',
+	'render_label_1': 'piece', 
+	'render_1': 'teoksen_nimi',
+	'render_label_2': 'year', 
+	'render_2': 'year'
+}
+
+params_extract_year = {'in_field': 'päivämäärä', 'out_field': 'year'}
+settings_extract_year = {'regexp': '\d{4}'}
+
 def createProject(title):
 	print('Creating project')
 	title = "Python: " + title
@@ -54,7 +78,7 @@ def getAllDocs(collection):
 	
 
 # main program
-project_id = createProject("csv-read")
+project_id = createProject(project_title)
 collection_id = createCollection(project_id)
 
 # upload local csv file (about 50 000 items)
@@ -66,26 +90,41 @@ collection_id = createCollection(project_id)
 #filename = parsed['filename']
 
 
-file_url = 'http://www.hel.fi/hel2/tietokeskus/data/helsinki/kulttuuri/Helsingin_kaupunginorkesterin_konsertit.csv'
 
-# add online csv read node
-params = {'file_url': file_url}
-data = {'params': params, 'collection': collection_id}
+# create online csv read node
+data = {'params': params_csv, 'collection': collection_id}
 csv_read = addNode('source_web_csv', data, project_id);
 
-# run csv readn node
+#create extract node
+data = {'params': params_extract_year, 'collection': collection_id}
+extract_year = addNode('process_field_extract', data, project_id);
+
+#create facet view node
+data = {'params': {}, 'collection': collection_id}
+facet = addNode('view_facet', data, project_id);
+
+
+# run csv read node
 print("Reading CSV...")
-settings = {'separator': ';', 'encoding': 'latin1', 'columns': 'true'}
-runNode(csv_read, settings)
+runNode(csv_read, settings_csv)
+
+# run csv read node
+print("Extracting years... this takes a while...")
+runNode(extract_year, settings_extract_year)
+
+# run facet node
+print("Creating facet view...")
+runNode(facet, settings_facet)
 print("Done!")
 
+
 # get top 10 composers from facet api
-r = requests.get(url + "/collections/" + collection_id + "/facet?fields=composer")
+r = requests.get(url + "/collections/" + collection_id + "/facet?fields=säveltäjä")
 docs = json.loads(r.text)
 
 print('************** TOP 10 Composers ****************')
 for i in range(10): 
-	doc = docs['facets'][0]['composer'][i]
+	doc = docs['facets'][0]['säveltäjä'][i]
 	print(doc['_id'] + '  -> ' + str(doc['count'])) 
 print('************************************************')
 
