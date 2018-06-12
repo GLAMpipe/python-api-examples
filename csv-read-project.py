@@ -57,32 +57,36 @@ def getAllDocs(collection):
 project_id = createProject("csv-read")
 collection_id = createCollection(project_id)
 
-# upload csv file (about 50 000 items)
+# upload local csv file (about 50 000 items)
 # dataset: http://www.hri.fi/fi/dataset/helsingin-kaupunginorkesterin-konsertit
-files = {'file': open('files/Concerts_of_Helsinki_City_Orchestra.csv','rb')}
-r = requests.post(url + "/upload", files=files)
-print(r.text)
-parsed = json.loads(r.text)
-filename = parsed['filename']
+#files = {'file': open('files/Concerts_of_Helsinki_City_Orchestra.csv','rb')}
+#r = requests.post(url + "/upload", files=files)
+#print(r.text)
+#parsed = json.loads(r.text)
+#filename = parsed['filename']
 
-# add csv read node
-params = {'filename': filename, 'file': parsed['originalname']}
+
+file_url = 'http://www.hel.fi/hel2/tietokeskus/data/helsinki/kulttuuri/Helsingin_kaupunginorkesterin_konsertit.csv'
+
+# add online csv read node
+params = {'file_url': file_url}
 data = {'params': params, 'collection': collection_id}
-csv_read = addNode('source_file_csv', data, project_id);
+csv_read = addNode('source_web_csv', data, project_id);
 
-# run text detection node
+# run csv readn node
 print("Reading CSV...")
 settings = {'separator': ';', 'encoding': 'latin1', 'columns': 'true'}
 runNode(csv_read, settings)
 print("Done!")
 
-# get top 10 composers
-r = requests.get(url + "/collections/" + collection_id + "/facet/composer?limit=10")
+# get top 10 composers from facet api
+r = requests.get(url + "/collections/" + collection_id + "/facet?fields=composer")
 docs = json.loads(r.text)
-#print(json.dumps(docs, sort_keys=True, ensure_ascii=False))
+
 print('************** TOP 10 Composers ****************')
-for doc in docs['count']:
-	print(doc['_id'] + ' -> ' + str(doc['count'])) 
+for i in range(10): 
+	doc = docs['facets'][0]['composer'][i]
+	print(doc['_id'] + '  -> ' + str(doc['count'])) 
 print('************************************************')
 
 # uncomment this to delete all python test projects
